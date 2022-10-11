@@ -13,3 +13,5 @@ RoxygenNote: 7.2.1
 Imports: 
     callr,
     fs
+URL: https://github.com/tomjemmett/watchr
+BugReports: https://github.com/tomjemmett/watchr/issues
