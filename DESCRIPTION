@@ -1,0 +1,12 @@
+Package: watchr
+Title: Watch files and run R
+Version: 0.0.0.9000
+Authors@R: 
+    person("Tom", "Jemmett", , "tom.jemmett@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Watch files for changes and run R code either in the current
+    process, or in a new process.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
