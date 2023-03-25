@@ -1,14 +1,35 @@
-#' Title
+#' Watch files for changes and run a function
 #'
-#' @param task_fn 
-#' @param ... 
-#' @param delay_time 
-#' @param max_retries 
+#' When any files that you pass in change, a new R process is started, and the
+#' function that is passed in is started in that process. Previously running
+#' tasks are killed, so there is only instance of one process running at any
+#' given time.
 #'
-#' @return
+#' @param task_fn a function to run in a separate process when the files have
+#'     changed
+#' @param ... the files that you want to monitor for changes, see details
+#' @param delay_time how often (in seconds) to check for changes to files,
+#'     defaults to 1 second
+#'
+#' @details
+#' The files that you want to monitor can either be passed in as vectors
+#' of file names, or functions that returns files. It must point to files
+#' rather than entire directories, but the files don't necessarily have to
+#' exist. The functions are re-evaluated for each loop, so if you want to
+#' find all files in a directory you can use a function, see examples.
+#'
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' # watch all of the files in the R directory, and the DESCRIPTION file for
+#' # changes, and print a message to the screen.
+#' watch_files_and_start_task(
+#'   \() print(files have changed),
+#'   "DESCRIPTION",
+#'   \() dir("R", "*.R")
+#' )
+#' }
 watch_files_and_start_task <- function(task_fn, ..., delay_time = 1) {
   files <- c(...)
 
@@ -23,7 +44,7 @@ watch_files_and_start_task <- function(task_fn, ..., delay_time = 1) {
       stop("Invalid data type")
     })
 
-    purrr::flatten_chr(ret)
+    unlist(ret)
   }
 
   task <- list(kill = \() NULL)
@@ -36,7 +57,9 @@ watch_files_and_start_task <- function(task_fn, ..., delay_time = 1) {
 
     # if files have changed, restart the task
     if (new_max_time > previous_max_time) {
-      cli::cli_alert_info("{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}: restarting app")
+      cli::cli_alert_info(
+        "{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}: restarting app"
+      )
       task$kill()
       task <- callr::r_bg(task_fn)
 
@@ -51,17 +74,7 @@ watch_files_and_start_task <- function(task_fn, ..., delay_time = 1) {
     while ((error <- task$read_error()) != "") {
       cat(error)
     }
-    # check the task is alive, if it isn't increment our retry counter
-    if (!task$is_alive()) {
-      # if we try to retry the task too many times, exit
-      stopifnot("task has failed to start" = retry_count == max_retries)
-      retry_count <- retry_count + 1
-      previous_max_time <- 0
-    } else {
-      # reset the retry counter as the task is running
-      retry_count <- 0
-    }
-    
+
     Sys.sleep(delay_time)
   }
 }

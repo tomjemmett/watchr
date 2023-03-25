@@ -3,15 +3,16 @@ Title: Watch files and run R
 Version: 0.0.0.9000
 Authors@R: 
     person("Tom", "Jemmett", , "tom.jemmett@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID="0000-0002-6943-2990"))
 Description: Watch files for changes and run R code either in the current
     process, or in a new process.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Imports: 
     callr,
+    cli,
     fs
 URL: https://github.com/tomjemmett/watchr
 BugReports: https://github.com/tomjemmett/watchr/issues
