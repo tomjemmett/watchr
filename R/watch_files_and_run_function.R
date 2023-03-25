@@ -48,12 +48,21 @@ watch_files_and_run_function <- function(fn, ..., delay_time = 1) {
   previous_max_time <- -Inf
 
   repeat {
-    new_max_time <- max(fs::file_info(files_fn())$modification_time)
+    new_max_time <- max(
+      c(
+        previous_max_time,
+        fs::file_info(files_fn())$modification_time
+      ),
+      na.rm = TRUE
+    )
 
     # if files have changed, restart the task
     if (new_max_time > previous_max_time) {
       cli::cli_alert_info(
-        "{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}: restarting app"
+        paste(
+          "{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}:",
+          "files changed, rerunning function"
+        )
       )
       fn()
 

@@ -4,11 +4,10 @@
 \alias{watch_files_and_start_task}
 \title{Watch files for changes and run a function}
 \usage{
-watch_files_and_start_task(task_fn, ..., delay_time = 1)
+watch_files_and_start_task(fn, ..., delay_time = 1)
 }
 \arguments{
-\item{task_fn}{a function to run in a separate process when the files have
-changed}
+\item{fn}{a function to run in a separate process when the files have changed}
 
 \item{...}{the files that you want to monitor for changes, see details}
 

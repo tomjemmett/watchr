@@ -5,8 +5,7 @@
 #' tasks are killed, so there is only instance of one process running at any
 #' given time.
 #'
-#' @param task_fn a function to run in a separate process when the files have
-#'     changed
+#' @param fn a function to run in a separate process when the files have changed
 #' @param ... the files that you want to monitor for changes, see details
 #' @param delay_time how often (in seconds) to check for changes to files,
 #'     defaults to 1 second
@@ -30,7 +29,7 @@
 #'   \() dir("R", "*.R")
 #' )
 #' }
-watch_files_and_start_task <- function(task_fn, ..., delay_time = 1) {
+watch_files_and_start_task <- function(fn, ..., delay_time = 1) {
   files <- c(...)
 
   files_fn <- function() {
@@ -50,18 +49,25 @@ watch_files_and_start_task <- function(task_fn, ..., delay_time = 1) {
   task <- list(kill = \() NULL)
   previous_max_time <- -Inf
 
-  task_fn <- \() try(task_fn())
-
   repeat {
-    new_max_time <- max(fs::file_info(files_fn())$modification_time)
+    new_max_time <- max(
+      c(
+        previous_max_time,
+        fs::file_info(files_fn())$modification_time
+      ),
+      na.rm = TRUE
+    )
 
     # if files have changed, restart the task
     if (new_max_time > previous_max_time) {
       cli::cli_alert_info(
-        "{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}: restarting app"
+        paste(
+          "{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}:",
+          "files changed, restarting task"
+        )
       )
       task$kill()
-      task <- callr::r_bg(task_fn)
+      task <- callr::r_bg(fn)
 
       previous_max_time <- new_max_time
     }
