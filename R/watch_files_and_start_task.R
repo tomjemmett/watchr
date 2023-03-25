@@ -9,15 +9,40 @@
 #' @export
 #'
 #' @examples
-watch_files_and_start_task <- function(task_fn, ..., delay_time = 1, max_retries = 3) {
+watch_files_and_start_task <- function(task_fn, ..., delay_time = 1) {
   files <- c(...)
-  stopifnot("... argument not all characters" = is.character(files))
-  # start the task and get the current file modified time
-  task <- callr::r_bg(task_fn)
-  previous_max_time <- get_max_modified_time(files)
-  # main loop
-  retry_count <- 0 # in case tasks fail
+
+  files_fn <- function() {
+    ret <- lapply(files, \(f) {
+      if (is.character(f)) {
+        return(f)
+      }
+      if (is.function(f)) {
+        return(f())
+      }
+      stop("Invalid data type")
+    })
+
+    purrr::flatten_chr(ret)
+  }
+
+  task <- list(kill = \() NULL)
+  previous_max_time <- -Inf
+
+  task_fn <- \() try(task_fn())
+
   repeat {
+    new_max_time <- max(fs::file_info(files_fn())$modification_time)
+
+    # if files have changed, restart the task
+    if (new_max_time > previous_max_time) {
+      cli::cli_alert_info("{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}: restarting app")
+      task$kill()
+      task <- callr::r_bg(task_fn)
+
+      previous_max_time <- new_max_time
+    }
+
     # show any output from the task
     while ((output <- task$read_output()) != "") {
       cat(output)
@@ -35,17 +60,6 @@ watch_files_and_start_task <- function(task_fn, ..., delay_time = 1, max_retries
     } else {
       # reset the retry counter as the task is running
       retry_count <- 0
-    }
-    
-    # see if any of the files have changed since the last loop iteration
-    new_max_time <- get_max_modified_time(files)
-    # if files have changed, restart the task
-    if (new_max_time > previous_max_time) {
-      cli::cli_alert_info("{format(Sys.time(), '%Y-%m-%d %H:%M:%S')}: restarting task")
-      task$kill()
-      task <- callr::r_bg(task_fn)
-      
-      previous_max_time <- new_max_time
     }
     
     Sys.sleep(delay_time)
