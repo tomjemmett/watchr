@@ -4,3 +4,4 @@
 ^project.*\.tar\.gz$
 ^project.*\.tgz$
 ^LICENSE\.md$
+^\.github$
